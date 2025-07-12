@@ -88,7 +88,6 @@
         </div>
 
         <!-- Square and Cube Buttons -->
-        <!-- Removed flex-grow spacer above, relying on justify-between and keypad min-height -->
         <div class="w-full flex justify-between items-center px-4 mb-8">
             <button id="square-button" class="action-button bg-black text-black w-5/12 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white">
                 Square
@@ -103,8 +102,11 @@
             <!-- Result will be displayed here -->
         </div>
 
-        <!-- Show Button (Bottom Right) -->
-        <div class="w-full flex justify-end p-4">
+        <!-- Bottom Buttons (Notify and Show) -->
+        <div class="w-full flex justify-between items-center p-4">
+            <button id="notify-button" class="action-button bg-black text-black w-1/3 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white">
+                Notify
+            </button>
             <button id="show-button" class="action-button bg-black text-black w-1/3 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white">
                 Show
             </button>
@@ -125,6 +127,7 @@
         const cubeButton = document.getElementById('cube-button');
         const showButton = document.getElementById('show-button');
         const clearButton = document.getElementById('clear-button');
+        const notifyButton = document.getElementById('notify-button'); // New button reference
 
         /**
          * Handles the click event for keypad number buttons.
@@ -228,6 +231,39 @@
         }
 
         /**
+         * Sends a browser notification with the calculated result.
+         */
+        function sendNotification() {
+            // Provide subtle visual feedback for the notify button
+            notifyButton.style.backgroundColor = '#333';
+            setTimeout(() => {
+                notifyButton.style.backgroundColor = 'black';
+            }, 100);
+
+            if (calculatedResult === null) {
+                console.log('No calculation result to notify.');
+                return;
+            }
+
+            // Check if the browser supports notifications
+            if (!("Notification" in window)) {
+                console.error("This browser does not support desktop notification.");
+                return;
+            }
+
+            // Only send notification if permission is granted
+            if (Notification.permission === "granted") {
+                new Notification("Calculator Result", {
+                    body: `Result: ${calculatedResult.toLocaleString('en-US', { maximumFractionDigits: 10 })}`,
+                    icon: 'https://placehold.co/48x48/000000/FFFFFF?text=Calc' // Placeholder icon
+                });
+                console.log('Notification sent.');
+            } else {
+                console.log('Notification permission not granted. Cannot send notification.');
+            }
+        }
+
+        /**
          * Toggles full screen mode for the document.
          */
         function toggleFullScreen() {
@@ -253,17 +289,25 @@
         squareButton.addEventListener('click', calculateSquare);
         cubeButton.addEventListener('click', calculateCube);
         showButton.addEventListener('click', showResult);
+        notifyButton.addEventListener('click', sendNotification); // New event listener for notify button
         fullscreenButton.addEventListener('click', toggleFullScreen);
 
-        // Ensure the app container adjusts to viewport changes for better responsiveness
-        window.addEventListener('resize', () => {
-            // No specific action needed here for this simple layout, as Tailwind handles most of it.
-            // But for more complex canvas-based apps, this is where you'd redraw or resize the canvas.
-        });
-
-        // Initial setup for the result display to be hidden
+        // Initial setup for the result display to be hidden and request notification permission
         window.onload = () => {
             resultDisplay.classList.add('opacity-0');
+
+            // Request notification permission when the page loads
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        console.log("Notification permission granted on load.");
+                    } else {
+                        console.log("Notification permission denied or dismissed on load.");
+                    }
+                });
+            } else {
+                console.log("This browser does not support desktop notification.");
+            }
         };
 
     </script>
