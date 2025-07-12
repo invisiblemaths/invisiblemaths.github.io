@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invisible Calculator</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles to ensure full screen and font */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrolling */
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+        }
+        /* Ensure the main container takes full viewport height */
+        #app-container {
+            min-height: 100vh; /* Use min-height to ensure it covers the screen */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+        /* Make buttons large and easy to tap on mobile */
+        .keypad-button, .action-button {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem; /* Large font size for visibility if needed, but text is black */
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none; /* Prevent text selection */
+            transition: background-color 0.1s ease-in-out; /* Smooth transition for feedback */
+        }
+        /* Style for the result display */
+        #result-display {
+            min-height: 5rem; /* Ensure enough space for result */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5rem; /* Large font size for result */
+            font-weight: bold;
+            text-align: center;
+            word-break: break-all; /* Break long numbers */
+            padding: 1rem;
+        }
+        /* Specific styling for the 0 button to span two columns */
+        .keypad-grid .col-span-2 {
+            grid-column: span 2 / span 2;
+        }
+    </style>
+</head>
+<body class="bg-black text-black">
+    <div id="app-container" class="w-full max-w-screen-md mx-auto p-4 flex flex-col justify-between items-center relative">
+
+        <!-- Full Screen Button (Top Right) -->
+        <div class="absolute top-4 right-4 z-10">
+            <button id="fullscreen-button" class="bg-black text-black p-4 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white">
+                Full Screen
+            </button>
+        </div>
+
+        <!-- Spacer to push content down and make room for top button -->
+        <div class="flex-grow"></div>
+
+        <!-- Keypad (takes up at least half the screen) -->
+        <div class="w-full flex-grow flex items-center justify-center py-4 md:py-8">
+            <div class="grid grid-cols-3 gap-2 w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg aspect-square">
+                <!-- Row 1: 1, 2, 3 -->
+                <button class="keypad-button bg-black text-black rounded-xl" data-value="1">1</button>
+                <button class="keypad-button bg-black text-black rounded-xl" data-value="2">2</button>
+                <button class="keypad-button bg-black text-black rounded-xl" data-value="3">3</button>
+                <!-- Row 2: 4, 5, 6 -->
+                <button class="keypad-button bg-black text-black rounded-xl" data-value="4">4</button>
+                <button class="keypad-button bg-black text-black rounded-xl" data-value="5">5</button>
+                <button class="keypad-button bg-black text-black rounded-xl" data-value="6">6</button>
+                <!-- Row 3: 7, 8, 9 -->
+                <button class="keypad-button bg-black text-black rounded-xl" data-value="7">7</button>
+                <button class="keypad-button bg-black text-black rounded-xl" data-value="8">8</button>
+                <button class="keypad-button bg-black text-black rounded-xl" data-value="9">9</button>
+                <!-- Row 4: 0, C -->
+                <button class="keypad-button bg-black text-black rounded-xl col-span-2" data-value="0">0</button>
+                <button class="keypad-button bg-black text-black rounded-xl" id="clear-button">C</button> <!-- Clear button -->
+            </div>
+        </div>
+
+        <!-- Spacer to push content down -->
+        <div class="flex-grow"></div>
+
+        <!-- Square and Cube Buttons -->
+        <div class="w-full flex justify-between items-center px-4 mb-8">
+            <button id="square-button" class="action-button bg-black text-black w-5/12 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white">
+                Square
+            </button>
+            <button id="cube-button" class="action-button bg-black text-black w-5/12 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white">
+                Cube
+            </button>
+        </div>
+
+        <!-- Result Display Area (initially hidden, shows white text when 'Show' is pressed) -->
+        <div id="result-display" class="w-full text-white opacity-0 transition-opacity duration-300">
+            <!-- Result will be displayed here -->
+        </div>
+
+        <!-- Show Button (Bottom Right) -->
+        <div class="w-full flex justify-end p-4">
+            <button id="show-button" class="action-button bg-black text-black w-1/3 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white">
+                Show
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Global variables to store the current number input and the calculated result
+        let currentNumberInput = '';
+        let calculatedResult = null;
+
+        // Get references to DOM elements
+        const resultDisplay = document.getElementById('result-display');
+        const fullscreenButton = document.getElementById('fullscreen-button');
+        const keypadButtons = document.querySelectorAll('.keypad-button');
+        const squareButton = document.getElementById('square-button');
+        const cubeButton = document.getElementById('cube-button');
+        const showButton = document.getElementById('show-button');
+        const clearButton = document.getElementById('clear-button');
+
+        /**
+         * Handles the click event for keypad number buttons.
+         * Appends the clicked digit to the currentNumberInput string.
+         * @param {Event} event - The click event object.
+         */
+        function handleNumberClick(event) {
+            const value = event.target.dataset.value;
+            if (value !== undefined) {
+                currentNumberInput += value;
+                console.log('Current Number Input:', currentNumberInput); // For debugging
+                // Optionally, provide a subtle visual feedback for a brief moment
+                event.target.style.backgroundColor = '#333'; // Darker grey for feedback
+                setTimeout(() => {
+                    event.target.style.backgroundColor = 'black'; // Revert to black
+                }, 100);
+            }
+        }
+
+        /**
+         * Handles the click event for the Clear button.
+         * Resets the currentNumberInput and calculatedResult.
+         * Hides the result display.
+         */
+        function handleClearClick() {
+            currentNumberInput = '';
+            calculatedResult = null;
+            resultDisplay.textContent = '';
+            resultDisplay.classList.add('opacity-0'); // Hide result
+            console.log('Cleared: currentNumberInput and calculatedResult reset.');
+            // Provide subtle visual feedback for the clear button
+            clearButton.style.backgroundColor = '#333';
+            setTimeout(() => {
+                clearButton.style.backgroundColor = 'black';
+            }, 100);
+        }
+
+        /**
+         * Calculates the square of the current number input.
+         * Stores the result in calculatedResult.
+         */
+        function calculateSquare() {
+            const num = parseFloat(currentNumberInput);
+            if (!isNaN(num)) {
+                calculatedResult = num * num;
+                console.log('Calculated Square:', calculatedResult); // For debugging
+            } else {
+                calculatedResult = 'Error: Invalid Number';
+                console.error('Error: Cannot calculate square, invalid number input.');
+            }
+            // Provide subtle visual feedback for the square button
+            squareButton.style.backgroundColor = '#333';
+            setTimeout(() => {
+                squareButton.style.backgroundColor = 'black';
+            }, 100);
+            // Hide the result display immediately after calculation, it will be shown on 'Show'
+            resultDisplay.classList.add('opacity-0');
+        }
+
+        /**
+         * Calculates the cube of the current number input.
+         * Stores the result in calculatedResult.
+         */
+        function calculateCube() {
+            const num = parseFloat(currentNumberInput);
+            if (!isNaN(num)) {
+                calculatedResult = num * num * num;
+                console.log('Calculated Cube:', calculatedResult); // For debugging
+            } else {
+                calculatedResult = 'Error: Invalid Number';
+                console.error('Error: Cannot calculate cube, invalid number input.');
+            }
+            // Provide subtle visual feedback for the cube button
+            cubeButton.style.backgroundColor = '#333';
+            setTimeout(() => {
+                cubeButton.style.backgroundColor = 'black';
+            }, 100);
+            // Hide the result display immediately after calculation, it will be shown on 'Show'
+            resultDisplay.classList.add('opacity-0');
+        }
+
+        /**
+         * Displays the calculated result on the screen.
+         * Makes the result display visible.
+         */
+        function showResult() {
+            if (calculatedResult !== null) {
+                resultDisplay.textContent = calculatedResult.toLocaleString('en-US', { maximumFractionDigits: 10 }); // Format number for readability
+                resultDisplay.classList.remove('opacity-0'); // Make result visible
+                console.log('Showing Result:', calculatedResult); // For debugging
+            } else {
+                resultDisplay.textContent = 'No calculation yet';
+                resultDisplay.classList.remove('opacity-0');
+                console.log('No calculation to show.');
+            }
+            // Provide subtle visual feedback for the show button
+            showButton.style.backgroundColor = '#333';
+            setTimeout(() => {
+                showButton.style.backgroundColor = 'black';
+            }, 100);
+        }
+
+        /**
+         * Toggles full screen mode for the document.
+         */
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+            // Provide subtle visual feedback for the fullscreen button
+            fullscreenButton.style.backgroundColor = '#333';
+            setTimeout(() => {
+                fullscreenButton.style.backgroundColor = 'black';
+            }, 100);
+        }
+
+        // Add event listeners to buttons
+        keypadButtons.forEach(button => {
+            button.addEventListener('click', handleNumberClick);
+        });
+        clearButton.addEventListener('click', handleClearClick);
+        squareButton.addEventListener('click', calculateSquare);
+        cubeButton.addEventListener('click', calculateCube);
+        showButton.addEventListener('click', showResult);
+        fullscreenButton.addEventListener('click', toggleFullScreen);
+
+        // Ensure the app container adjusts to viewport changes for better responsiveness
+        window.addEventListener('resize', () => {
+            // No specific action needed here for this simple layout, as Tailwind handles most of it.
+            // But for more complex canvas-based apps, this is where you'd redraw or resize the canvas.
+        });
+
+        // Initial setup for the result display to be hidden
+        window.onload = () => {
+            resultDisplay.classList.add('opacity-0');
+        };
+
+    </script>
+</body>
+</html>
