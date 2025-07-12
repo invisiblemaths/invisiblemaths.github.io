@@ -20,7 +20,7 @@
             min-height: 100vh; /* Use min-height to ensure it covers the screen */
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: space-between; /* Distribute space between items */
             align-items: center;
         }
         /* Make buttons large and easy to tap on mobile */
@@ -64,13 +64,11 @@
             </button>
         </div>
 
-        <!-- Spacer to push content down and make room for top button -->
-        <div class="flex-grow"></div>
-
-        <!-- Keypad (takes up at least half the screen) -->
-        <div class="w-full flex-grow flex items-center justify-center py-6 md:py-8">
+        <!-- Keypad (now takes up at least two-thirds of the screen) -->
+        <!-- Added min-h-[66vh] to ensure it takes at least 2/3 of viewport height -->
+        <div class="w-full flex-grow flex items-center justify-center py-4 md:py-8 min-h-[66vh]">
             <!-- Increased max-width for the keypad grid -->
-            <div class="grid grid-cols-3 gap-1 w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl aspect-square">
+            <div class="grid grid-cols-3 gap-2 w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl aspect-square">
                 <!-- Row 1: 1, 2, 3 -->
                 <button class="keypad-button bg-black text-black rounded-xl" data-value="1">1</button>
                 <button class="keypad-button bg-black text-black rounded-xl" data-value="2">2</button>
@@ -89,15 +87,13 @@
             </div>
         </div>
 
-        <!-- Spacer to push content down -->
-        
-
         <!-- Square and Cube Buttons -->
+        <!-- Removed flex-grow spacer above, relying on justify-between and keypad min-height -->
         <div class="w-full flex justify-between items-center px-4 mb-8">
-            <button id="square-button" class="action-button bg-black text-black w-11/24 py-5 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white">
+            <button id="square-button" class="action-button bg-black text-black w-5/12 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white">
                 Square
             </button>
-            <button id="cube-button" class="action-button bg-black text-black w-11/24 py-5 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white">
+            <button id="cube-button" class="action-button bg-black text-black w-5/12 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white">
                 Cube
             </button>
         </div>
